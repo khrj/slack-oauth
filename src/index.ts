@@ -1,7 +1,13 @@
   // deno-lint-ignore-file camelcase
-import { ServerRequest } from 'https://deno.land/std@0.86.0/http/server.ts'
-import { create, verify } from "https://deno.land/x/djwt@v2.2/mod.ts"
-import { WebAPICallResult, WebClient, WebClientOptions } from 'https://deno.land/x/slack_web_api@1.0.0/mod.ts'
+import { 
+    ServerRequest, 
+    createJwt, 
+    verifyJwt,
+    WebAPICallResult,
+    WebClient,
+    WebClientOptions 
+} from '../deps.ts'
+
 import {
     CodedError,
     InstallerInitializationError,
@@ -429,14 +435,14 @@ class ClearStateStore implements StateStore {
     }
 
     public async generateStateParam(installOptions: InstallURLOptions, now: Date): Promise<string> {
-        return await create({
+        return await createJwt({
             alg: "HS256"
         }, { installOptions, now: now.toJSON() }, this.stateSecret)
     }
 
     public async verifyStateParam(_now: Date, state: string): Promise<InstallURLOptions> {
         // decode the state using the secret
-        const decoded = await verify(state, this.stateSecret, "HS256") as unknown as StateObj
+        const decoded = await verifyJwt(state, this.stateSecret, "HS256") as unknown as StateObj
 
         // return installOptions
         return decoded.installOptions
