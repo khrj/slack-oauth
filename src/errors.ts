@@ -9,8 +9,7 @@ export enum ErrorCode {
     InstallerInitializationError = 'slack_oauth_installer_initialization_error',
     AuthorizationError = 'slack_oauth_installer_authorization_error',
     GenerateInstallUrlError = 'slack_oauth_generate_url_error',
-    MissingStateError = 'slack_oauth_missing_state',
-    UnknownError = 'slack_oauth_unknown_error',
+    HandleInstallCodeStateError = 'slack_oauth_handle_code_state_error'
 }
 
 export class InstallerInitializationError extends Error implements CodedError {
@@ -21,12 +20,8 @@ export class GenerateInstallUrlError extends Error implements CodedError {
     public code = ErrorCode.GenerateInstallUrlError
 }
 
-export class MissingStateError extends Error implements CodedError {
-    public code = ErrorCode.MissingStateError
-}
-
-export class UnknownError extends Error implements CodedError {
-    public code = ErrorCode.UnknownError
+export class HandleInstallCodeStateError extends Error implements CodedError {
+    public code = ErrorCode.HandleInstallCodeStateError
 }
 
 export class AuthorizationError extends Error implements CodedError {

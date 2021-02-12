@@ -1,20 +1,18 @@
-  // deno-lint-ignore-file camelcase
-import { 
-    ServerRequest, 
-    createJwt, 
+// deno-lint-ignore-file camelcase
+import {
+    createJwt,
     verifyJwt,
     WebAPICallResult,
     WebClient,
-    WebClientOptions 
+    WebClientOptions
 } from '../deps.ts'
 
 import {
     CodedError,
     InstallerInitializationError,
-    UnknownError,
-    MissingStateError,
     GenerateInstallUrlError,
     AuthorizationError,
+    HandleInstallCodeStateError
 } from './errors.ts'
 import { Logger, LogLevel, getLogger } from './logger.ts'
 
@@ -78,7 +76,7 @@ export class InstallProvider {
         this.installationStore = installationStore
         this.clientId = clientId
         this.clientSecret = clientSecret
-        this.handleCallback = this.handleCallback.bind(this)
+        this.handle = this.handle.bind(this)
         this.authorize = this.authorize.bind(this)
         this.authVersion = authVersion
 
@@ -102,9 +100,9 @@ export class InstallProvider {
         try {
             let queryResult
             if (source.isEnterpriseInstall) {
-                queryResult = await this.installationStore.fetchInstallation(source as InstallationQuery<true>, this.logger)
+                queryResult = this.installationStore.fetchInstallation(source as InstallationQuery<true>, this.logger)
             } else {
-                queryResult = await this.installationStore.fetchInstallation(source as InstallationQuery<false>, this.logger)
+                queryResult = this.installationStore.fetchInstallation(source as InstallationQuery<false>, this.logger)
             }
 
             if (queryResult === undefined) {
@@ -204,27 +202,13 @@ export class InstallProvider {
      * query params for an access token, and stores token and associated data
      * in the installationStore.
      */
-    public async handleCallback(
-        req: ServerRequest,
-        options?: CallbackOptions,
-    ): Promise<void> {
-        let parsedUrl
-        let code: string
-        let state: string
+    public async handle(
+        code: string,
+        state: string,
+    ): Promise<string> {
         let installOptions: InstallURLOptions
 
         try {
-            if (req.url) {
-                parsedUrl = new URL(req.url)
-                code = parsedUrl.searchParams.get("code") as string
-                state = parsedUrl.searchParams.get("state") as string
-                if (state === undefined || state === '' || code === undefined) {
-                    throw new MissingStateError('redirect url is missing state or code query parameters')
-                }
-            } else {
-                throw new UnknownError('Something went wrong')
-            }
-
             installOptions = await this.stateStore.verifyStateParam(new Date(), state)
             const client = new WebClient(undefined, this.clientOptions)
 
@@ -341,30 +325,18 @@ export class InstallProvider {
 
             // Save installation object to installation store
             if (installation.isEnterpriseInstall) {
-                await this.installationStore.storeInstallation(installation as OrgInstallation, this.logger)
+                this.installationStore.storeInstallation(installation as OrgInstallation, this.logger)
             } else {
-                await this.installationStore.storeInstallation(installation as Installation<'v1' | 'v2', false>, this.logger)
+                this.installationStore.storeInstallation(installation as Installation<'v1' | 'v2', false>, this.logger)
             }
 
-            // Call the success callback
-            if (options !== undefined && options.success !== undefined) {
-                this.logger.debug('calling passed in options.success')
-                options.success(installation, installOptions, req)
-            } else {
-                this.logger.debug('run built-in success function')
-                callbackSuccess(installation, installOptions, req)
-            }
+            // Return the success HTML
+            return getSuccessBody(installation, installOptions)
         } catch (error) {
             this.logger.error(error)
 
-            // Call the failure callback
-            if (options !== undefined && options.failure !== undefined) {
-                this.logger.debug('calling passed in options.failure')
-                options.failure(error, installOptions!, req)
-            } else {
-                this.logger.debug('run built-in failure function')
-                callbackFailure(error, installOptions!, req)
-            }
+            // Return the failure HTML
+            throw new HandleInstallCodeStateError(getFailureBody(error, installOptions!))
         }
     }
 }
@@ -388,27 +360,6 @@ export interface InstallURLOptions {
     redirectUri?: string
     userScopes?: string | string[] // cannot be used with authVersion=v1
     metadata?: string // Arbitrary data can be stored here, potentially to save app state or use for custom redirect
-}
-
-export interface CallbackOptions {
-    // success is given control after handleCallback() has stored the
-    // installation. when provided, this function must complete the
-    // callbackRes.
-    success?: (
-        installation: Installation | OrgInstallation,
-        options: InstallURLOptions,
-        callbackReq: ServerRequest,
-    ) => void
-
-    // failure is given control when handleCallback() fails at any point.
-    // when provided, this function must complete the callbackRes.
-    // default:
-    // serve a generic "Error" web page (show detailed cause in development)
-    failure?: (
-        error: CodedError,
-        options: InstallURLOptions,
-        callbackReq: ServerRequest,
-    ) => void
 }
 
 export interface StateStore {
@@ -640,11 +591,10 @@ export interface AuthorizeResult {
 }
 
 // Default function to call when OAuth flow is successful
-function callbackSuccess(
+function getSuccessBody(
     installation: Installation,
     _options: InstallURLOptions | undefined,
-    req: ServerRequest,
-): void {
+): string {
     let redirectUrl: string
 
     if (isNotOrgInstall(installation) && installation.appId !== undefined) {
@@ -665,30 +615,17 @@ function callbackSuccess(
     <h1>Success! Redirecting to the Slack App...</h1>
     <button onClick="window.location = '${redirectUrl}'">Click here to redirect</button>
   </body></html>`
-    req.respond({
-        status: 200,
-        headers: new Headers({
-            'Content-Type': 'text/html'
-        }),
-        body: htmlResponse
-    })
+
+    return htmlResponse
 }
 
 // Default function to call when OAuth flow is unsuccessful
-function callbackFailure(
+function getFailureBody(
     _error: CodedError,
     _options: InstallURLOptions,
-    req: ServerRequest,
-): void {
+): string {
     const htmlResponse = '<html><body><h1>Oops, Something Went Wrong! Please Try Again or Contact the App Owner</h1></body></html>'
-
-    req.respond({
-        status: 500,
-        headers: new Headers({ 
-            'Content-Type': 'text/html' 
-        }),
-        body: htmlResponse
-    })
+    return htmlResponse
 }
 
 // Gets the bot_id using the `auth.test` method.

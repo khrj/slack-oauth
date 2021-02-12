@@ -5,7 +5,6 @@ export { InstallProvider } from './src/index.ts'
 export type { 
     InstallProviderOptions,
     InstallURLOptions,
-    CallbackOptions,
     StateStore,
     InstallationStore,
     Installation,
