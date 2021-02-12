@@ -9,7 +9,7 @@ This repo has been partially tested, but is not guaranteed to work
 ## Note on Compatiblity
 
 This is module is mostly compatible with its [node counterpart](https://www.npmjs.com/package/@slack/oauth).
-However, `InstallProvider` does not contain a `handleCallback` function taking request and response handlers. Instead, it has a `handle` function which takes a `code` and a `state` and does not handle responding; it instead returns a promise which resolves / rejects to the default HTML for successes / errors, which you can then respond with or override. This is to maximize compatiblity with various Deno HTTP servers.
+However, `InstallProvider` does not contain a `handleCallback` function taking request and response handlers. Instead, it has a `handle` function which takes a `code` and a `state` and does not handle responding and returns a promise which resolves / rejects to the default HTML for successes / errors, which you can then respond with or override. This is to maximize compatiblity with various Deno HTTP servers.
 
 ## Usage
 
