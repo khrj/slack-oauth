@@ -20,7 +20,7 @@ The following is an example of handling a request using [Oak](https://github.com
 ``` ts
 import "https://deno.land/x/dotenv@v2.0.0/load.ts"
 
-import { InstallProvider } from 'https://deno.land/x/slack_oauth@1.1.0/mod.ts'
+import { InstallProvider } from 'https://deno.land/x/slack_oauth@3.0.0/mod.ts'
 import { nanoid } from "https://deno.land/x/nanoid@v3.0.0/mod.ts"
 import { Application, Router } from "https://deno.land/x/oak/mod.ts"
 
@@ -71,7 +71,7 @@ await app.listen({ port: 8000 })
 ## API
 
 - Methods are almost identical to the [node @slack/oauth](https://www.npmjs.com/package/@slack/oauth) (see [Note on Compatiblity](#note-on-compatiblity))
-- Generated docs are available at https://doc.deno.land/https/deno.land/x/slack_oauth@1.1.0/mod.ts
+- Generated docs are available at https://doc.deno.land/https/deno.land/x/slack_oauth@3.0.0/mod.ts
 
 ## License
 - Slack Deno Web API is licensed under the MIT License. 
