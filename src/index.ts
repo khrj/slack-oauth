@@ -441,6 +441,9 @@ class MemoryInstallationStore implements InstallationStore {
         }
     }
 
+    // The following ignore is present since most custom fetchInstallation methods will 
+    // query from a database, which will require them to be async 
+    // deno-lint-ignore require-await
     public async fetchInstallation(
         query: InstallationQuery<boolean>,
         logger?: Logger): Promise<Installation<'v1' | 'v2'>> {
