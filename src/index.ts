@@ -100,9 +100,9 @@ export class InstallProvider {
         try {
             let queryResult
             if (source.isEnterpriseInstall) {
-                queryResult = this.installationStore.fetchInstallation(source as InstallationQuery<true>, this.logger)
+                queryResult = await this.installationStore.fetchInstallation(source as InstallationQuery<true>, this.logger)
             } else {
-                queryResult = this.installationStore.fetchInstallation(source as InstallationQuery<false>, this.logger)
+                queryResult = await this.installationStore.fetchInstallation(source as InstallationQuery<false>, this.logger)
             }
 
             if (queryResult === undefined) {
@@ -405,7 +405,7 @@ export interface InstallationStore {
         installation: Installation<AuthVersion, boolean>,
         logger?: Logger): void
     fetchInstallation:
-    (query: InstallationQuery<boolean>, logger?: Logger) => Installation<'v1' | 'v2', boolean>
+    (query: InstallationQuery<boolean>, logger?: Logger) => Promise<Installation<'v1' | 'v2', boolean>>
 }
 
 // using a javascript object as a makeshift database for development
@@ -441,9 +441,9 @@ class MemoryInstallationStore implements InstallationStore {
         }
     }
 
-    public fetchInstallation(
+    public async fetchInstallation(
         query: InstallationQuery<boolean>,
-        logger?: Logger): Installation<'v1' | 'v2'> {
+        logger?: Logger): Promise<Installation<'v1' | 'v2'>> {
         if (logger !== undefined) {
             logger.warn('Retrieving Access Token from DB. Please use a real Installation Store for production!')
         }
