@@ -6,10 +6,10 @@ export interface CodedError extends Error {
  * A dictionary of codes for errors produced by this package.
  */
 export enum ErrorCode {
-    InstallerInitializationError = 'slack_oauth_installer_initialization_error',
-    AuthorizationError = 'slack_oauth_installer_authorization_error',
-    GenerateInstallUrlError = 'slack_oauth_generate_url_error',
-    HandleInstallCodeStateError = 'slack_oauth_handle_code_state_error'
+    InstallerInitializationError = "slack_oauth_installer_initialization_error",
+    AuthorizationError = "slack_oauth_installer_authorization_error",
+    GenerateInstallUrlError = "slack_oauth_generate_url_error",
+    HandleInstallCodeStateError = "slack_oauth_handle_code_state_error",
 }
 
 export class InstallerInitializationError extends Error implements CodedError {

@@ -1,25 +1,19 @@
 // Classes
-export { InstallProvider } from './src/index.ts'
+export { InstallProvider } from "./src/index.ts"
 
 // Interfaces
-export type { 
+export type {
+    AuthorizeResult,
+    Installation,
+    InstallationQuery,
+    InstallationStore,
     InstallProviderOptions,
     InstallURLOptions,
     StateStore,
-    InstallationStore,
-    Installation,
-    InstallationQuery,
-    AuthorizeResult 
-} from './src/index.ts'
+} from "./src/index.ts"
 
 // Types
-export type {
-    OrgInstallation,
-    OrgInstallationQuery,
-    Logger
-} from './src/index.ts'
+export type { Logger, OrgInstallation, OrgInstallationQuery } from "./src/index.ts"
 
 // Enums
-export {
-    LogLevel
-} from './src/index.ts'
+export { LogLevel } from "./src/index.ts"

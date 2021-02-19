@@ -1,20 +1,14 @@
 // deno-lint-ignore-file camelcase
-import {
-    createJwt,
-    verifyJwt,
-    WebAPICallResult,
-    WebClient,
-    WebClientOptions
-} from '../deps.ts'
+import { createJwt, verifyJwt, WebAPICallResult, WebClient, WebClientOptions } from "../deps.ts"
 
 import {
-    CodedError,
-    InstallerInitializationError,
-    GenerateInstallUrlError,
     AuthorizationError,
-    HandleInstallCodeStateError
-} from './errors.ts'
-import { Logger, LogLevel, getLogger } from './logger.ts'
+    CodedError,
+    GenerateInstallUrlError,
+    HandleInstallCodeStateError,
+    InstallerInitializationError,
+} from "./errors.ts"
+import { getLogger, Logger, LogLevel } from "./logger.ts"
 
 /**
  * InstallProvider Class.
@@ -43,32 +37,31 @@ export class InstallProvider {
         stateSecret = undefined,
         stateStore = undefined,
         installationStore = new MemoryInstallationStore(),
-        authVersion = 'v2',
+        authVersion = "v2",
         logger = undefined,
         logLevel = LogLevel.INFO,
         clientOptions = {},
-        authorizationUrl = 'https://slack.com/oauth/v2/authorize',
+        authorizationUrl = "https://slack.com/oauth/v2/authorize",
     }: InstallProviderOptions) {
-
         if (clientId === undefined || clientSecret === undefined) {
-            throw new InstallerInitializationError('You must provide a valid clientId and clientSecret')
+            throw new InstallerInitializationError("You must provide a valid clientId and clientSecret")
         }
 
         // Setup the logger
-        if (typeof logger !== 'undefined') {
+        if (typeof logger !== "undefined") {
             this.logger = logger
-            if (typeof logLevel !== 'undefined') {
-                this.logger.debug('The logLevel given to OAuth was ignored as you also gave logger')
+            if (typeof logLevel !== "undefined") {
+                this.logger.debug("The logLevel given to OAuth was ignored as you also gave logger")
             }
         } else {
-            this.logger = getLogger('OAuth:InstallProvider', logLevel, logger)
+            this.logger = getLogger("OAuth:InstallProvider", logLevel, logger)
         }
 
         // Setup stateStore
         if (stateStore !== undefined) {
             this.stateStore = stateStore
         } else if (stateSecret === undefined) {
-            throw new InstallerInitializationError('You must provide a State Secret to use the built-in state store')
+            throw new InstallerInitializationError("You must provide a State Secret to use the built-in state store")
         } else {
             this.stateStore = new ClearStateStore(stateSecret)
         }
@@ -81,10 +74,12 @@ export class InstallProvider {
         this.authVersion = authVersion
 
         this.authorizationUrl = authorizationUrl
-        if (authorizationUrl !== 'https://slack.com/oauth/v2/authorize' && authVersion === 'v1') {
-            this.logger.info('You provided both an authorizationUrl and an authVersion! The authVersion will be ignored in favor of the authorizationUrl.')
-        } else if (authVersion === 'v1') {
-            this.authorizationUrl = 'https://slack.com/oauth/authorize'
+        if (authorizationUrl !== "https://slack.com/oauth/v2/authorize" && authVersion === "v1") {
+            this.logger.info(
+                "You provided both an authorizationUrl and an authVersion! The authVersion will be ignored in favor of the authorizationUrl.",
+            )
+        } else if (authVersion === "v1") {
+            this.authorizationUrl = "https://slack.com/oauth/authorize"
         }
 
         this.clientOptions = {
@@ -100,13 +95,19 @@ export class InstallProvider {
         try {
             let queryResult
             if (source.isEnterpriseInstall) {
-                queryResult = await this.installationStore.fetchInstallation(source as InstallationQuery<true>, this.logger)
+                queryResult = await this.installationStore.fetchInstallation(
+                    source as InstallationQuery<true>,
+                    this.logger,
+                )
             } else {
-                queryResult = await this.installationStore.fetchInstallation(source as InstallationQuery<false>, this.logger)
+                queryResult = await this.installationStore.fetchInstallation(
+                    source as InstallationQuery<false>,
+                    this.logger,
+                )
             }
 
             if (queryResult === undefined) {
-                throw new Error('Failed fetching data from the Installation Store')
+                throw new Error("Failed fetching data from the Installation Store")
             }
 
             const authResult: AuthorizeResult = {}
@@ -145,17 +146,16 @@ export class InstallProvider {
      * Uses stateStore to generate a value for the state query param.
      */
     public async generateInstallUrl(options: InstallURLOptions): Promise<string> {
-
         const slackURL = new URL(this.authorizationUrl)
 
         if (options.scopes === undefined) {
-            throw new GenerateInstallUrlError('You must provide a scope parameter when calling generateInstallUrl')
+            throw new GenerateInstallUrlError("You must provide a scope parameter when calling generateInstallUrl")
         }
 
         // scope
         let scopes: string
         if (options.scopes instanceof Array) {
-            scopes = options.scopes.join(',')
+            scopes = options.scopes.join(",")
         } else {
             scopes = options.scopes
         }
@@ -163,30 +163,30 @@ export class InstallProvider {
 
         // generate state
         const state = await this.stateStore.generateStateParam(options, new Date())
-        params.append('state', state)
+        params.append("state", state)
 
         // client id
-        params.append('client_id', this.clientId)
+        params.append("client_id", this.clientId)
 
         // redirect uri
         if (options.redirectUri !== undefined) {
-            params.append('redirect_uri', options.redirectUri)
+            params.append("redirect_uri", options.redirectUri)
         }
 
         // team id
         if (options.teamId !== undefined) {
-            params.append('team', options.teamId)
+            params.append("team", options.teamId)
         }
 
         // user scope, only available for OAuth v2
-        if (options.userScopes !== undefined && this.authVersion === 'v2') {
+        if (options.userScopes !== undefined && this.authVersion === "v2") {
             let userScopes: string
             if (options.userScopes instanceof Array) {
-                userScopes = options.userScopes.join(',')
+                userScopes = options.userScopes.join(",")
             } else {
                 userScopes = options.userScopes
             }
-            params.append('user_scope', userScopes)
+            params.append("user_scope", userScopes)
         }
 
         slackURL.search = params.toString()
@@ -215,7 +215,7 @@ export class InstallProvider {
             // Start: Build the installation object
             let installation: Installation
             let resp: OAuthV1Response | OAuthV2Response
-            if (this.authVersion === 'v1') {
+            if (this.authVersion === "v1") {
                 // convert response type from WebApiCallResult to OAuthResponse
                 const v1Resp = await client.oauth.access({
                     code,
@@ -225,18 +225,18 @@ export class InstallProvider {
                 }) as OAuthV1Response
 
                 // resp obj for v1 - https://api.slack.com/methods/oauth.access#response
-                const v1Installation: Installation<'v1', false> = {
+                const v1Installation: Installation<"v1", false> = {
                     team: { id: v1Resp.team_id, name: v1Resp.team_name },
                     enterprise: v1Resp.enterprise_id === null ? undefined : { id: v1Resp.enterprise_id },
                     user: {
                         token: v1Resp.access_token,
-                        scopes: v1Resp.scope.split(','),
+                        scopes: v1Resp.scope.split(","),
                         id: v1Resp.user_id,
                     },
 
                     // synthesized properties: enterprise installation is unsupported in v1 auth
                     isEnterpriseInstall: false,
-                    authVersion: 'v1',
+                    authVersion: "v1",
                 }
 
                 // only can get botId if bot access token exists
@@ -248,7 +248,7 @@ export class InstallProvider {
 
                     v1Installation.bot = {
                         id: botId,
-                        scopes: ['bot'],
+                        scopes: ["bot"],
                         token: v1Resp.bot.bot_access_token,
                         userId: v1Resp.bot.bot_user_id,
                     }
@@ -266,12 +266,12 @@ export class InstallProvider {
                 }) as OAuthV2Response
 
                 // resp obj for v2 - https://api.slack.com/methods/oauth.v2.access#response
-                const v2Installation: Installation<'v2', boolean> = {
+                const v2Installation: Installation<"v2", boolean> = {
                     team: v2Resp.team === null ? undefined : v2Resp.team,
                     enterprise: v2Resp.enterprise == null ? undefined : v2Resp.enterprise,
                     user: {
                         token: v2Resp.authed_user.access_token,
-                        scopes: v2Resp.authed_user.scope?.split(','),
+                        scopes: v2Resp.authed_user.scope?.split(","),
                         id: v2Resp.authed_user.id,
                     },
                     tokenType: v2Resp.token_type,
@@ -279,14 +279,16 @@ export class InstallProvider {
                     appId: v2Resp.app_id,
 
                     // synthesized properties
-                    authVersion: 'v2',
+                    authVersion: "v2",
                 }
 
-                if (v2Resp.access_token !== undefined && v2Resp.scope !== undefined && v2Resp.bot_user_id !== undefined) {
+                if (
+                    v2Resp.access_token !== undefined && v2Resp.scope !== undefined && v2Resp.bot_user_id !== undefined
+                ) {
                     // A bot user/scope was requested
                     const authResult = await runAuthTest(v2Resp.access_token, this.clientOptions)
                     v2Installation.bot = {
-                        scopes: v2Resp.scope.split(','),
+                        scopes: v2Resp.scope.split(","),
                         token: v2Resp.access_token,
                         userId: v2Resp.bot_user_id,
                         id: authResult.bot_id as string,
@@ -296,7 +298,6 @@ export class InstallProvider {
                         // if it is an org enterprise install, add the enterprise url
                         v2Installation.enterpriseUrl = authResult.url
                     }
-
                 } else if (v2Resp.authed_user.access_token !== undefined) {
                     // Only user scopes were requested
                     // TODO: confirm if it is possible to do an org enterprise install without a bot user
@@ -306,7 +307,9 @@ export class InstallProvider {
                     }
                 } else {
                     // TODO: make this a coded error
-                    throw new Error('The response from the authorization URL contained inconsistent information. Please file a bug.')
+                    throw new Error(
+                        "The response from the authorization URL contained inconsistent information. Please file a bug.",
+                    )
                 }
 
                 resp = v2Resp
@@ -327,7 +330,7 @@ export class InstallProvider {
             if (installation.isEnterpriseInstall) {
                 this.installationStore.storeInstallation(installation as OrgInstallation, this.logger)
             } else {
-                this.installationStore.storeInstallation(installation as Installation<'v1' | 'v2', false>, this.logger)
+                this.installationStore.storeInstallation(installation as Installation<"v1" | "v2", false>, this.logger)
             }
 
             // Return the success HTML
@@ -347,10 +350,10 @@ export interface InstallProviderOptions {
     stateStore?: StateStore // default ClearStateStore
     stateSecret?: string // ClearStateStoreOptions['secret'] // required when using default stateStore
     installationStore?: InstallationStore // default MemoryInstallationStore
-    authVersion?: 'v1' | 'v2' // default 'v2'
+    authVersion?: "v1" | "v2" // default 'v2'
     logger?: Logger
     logLevel?: LogLevel
-    clientOptions?: Omit<WebClientOptions, 'logLevel' | 'logger'>
+    clientOptions?: Omit<WebClientOptions, "logLevel" | "logger">
     authorizationUrl?: string
 }
 
@@ -386,9 +389,13 @@ class ClearStateStore implements StateStore {
     }
 
     public async generateStateParam(installOptions: InstallURLOptions, now: Date): Promise<string> {
-        return await createJwt({
-            alg: "HS256"
-        }, { installOptions, now: now.toJSON() }, this.stateSecret)
+        return await createJwt(
+            {
+                alg: "HS256",
+            },
+            { installOptions, now: now.toJSON() },
+            this.stateSecret,
+        )
     }
 
     public async verifyStateParam(_now: Date, state: string): Promise<InstallURLOptions> {
@@ -401,11 +408,14 @@ class ClearStateStore implements StateStore {
 }
 
 export interface InstallationStore {
-    storeInstallation<AuthVersion extends 'v1' | 'v2'>(
+    storeInstallation<AuthVersion extends "v1" | "v2">(
         installation: Installation<AuthVersion, boolean>,
-        logger?: Logger): void
-    fetchInstallation:
-    (query: InstallationQuery<boolean>, logger?: Logger) => Promise<Installation<'v1' | 'v2', boolean>>
+        logger?: Logger,
+    ): void
+    fetchInstallation: (
+        query: InstallationQuery<boolean>,
+        logger?: Logger,
+    ) => Promise<Installation<"v1" | "v2", boolean>>
 }
 
 // using a javascript object as a makeshift database for development
@@ -423,48 +433,49 @@ class MemoryInstallationStore implements InstallationStore {
         // TODO: what about installations on an enterprise (acting as a single workspace) with `admin` scope, which is not
         // an org install?
         if (logger !== undefined) {
-            logger.warn('Storing Access Token. Please use a real Installation Store for production!')
+            logger.warn("Storing Access Token. Please use a real Installation Store for production!")
         }
 
         if (isOrgInstall(installation)) {
             if (logger !== undefined) {
-                logger.debug('storing org installation')
+                logger.debug("storing org installation")
             }
             this.devDB[installation.enterprise.id] = installation
         } else if (isNotOrgInstall(installation)) {
             if (logger !== undefined) {
-                logger.debug('storing single team installation')
+                logger.debug("storing single team installation")
             }
             this.devDB[installation.team.id] = installation
         } else {
-            throw new Error('Failed saving installation data to installationStore')
+            throw new Error("Failed saving installation data to installationStore")
         }
     }
 
-    // The following ignore is present since most custom fetchInstallation methods will 
-    // query from a database, which will require them to be async 
+    // The following ignore is present since most custom fetchInstallation methods will
+    // query from a database, which will require them to be async
     // deno-lint-ignore require-await
     public async fetchInstallation(
         query: InstallationQuery<boolean>,
-        logger?: Logger): Promise<Installation<'v1' | 'v2'>> {
+        logger?: Logger,
+    ): Promise<Installation<"v1" | "v2">> {
         if (logger !== undefined) {
-            logger.warn('Retrieving Access Token from DB. Please use a real Installation Store for production!')
+            logger.warn("Retrieving Access Token from DB. Please use a real Installation Store for production!")
         }
         if (query.isEnterpriseInstall) {
             if (query.enterpriseId !== undefined) {
                 if (logger !== undefined) {
-                    logger.debug('fetching org installation')
+                    logger.debug("fetching org installation")
                 }
                 return this.devDB[query.enterpriseId] as OrgInstallation
             }
         }
         if (query.teamId !== undefined) {
             if (logger !== undefined) {
-                logger.debug('fetching single team installation')
+                logger.debug("fetching single team installation")
             }
-            return this.devDB[query.teamId] as Installation<'v1' | 'v2', false>
+            return this.devDB[query.teamId] as Installation<"v1" | "v2", false>
         }
-        throw new Error('Failed fetching installation')
+        throw new Error("Failed fetching installation")
     }
 }
 
@@ -498,8 +509,10 @@ class MemoryInstallationStore implements InstallationStore {
  *
  * TODO: IsEnterpriseInstall is always false when AuthVersion is v1
  */
-export interface Installation<AuthVersion extends ('v1' | 'v2') = ('v1' | 'v2'),
-    IsEnterpriseInstall extends boolean = boolean> {
+export interface Installation<
+    AuthVersion extends ("v1" | "v2") = ("v1" | "v2"),
+    IsEnterpriseInstall extends boolean = boolean,
+> {
     /**
      * TODO: when performing a “single workspace” install with the admin scope on the enterprise,
      * is the team property returned from oauth.access?
@@ -517,8 +530,8 @@ export interface Installation<AuthVersion extends ('v1' | 'v2') = ('v1' | 'v2'),
     enterprise: IsEnterpriseInstall extends true ? EnterpriseInfo : (EnterpriseInfo | undefined)
 
     user: {
-        token: AuthVersion extends 'v1' ? string : (string | undefined)
-        scopes: AuthVersion extends 'v1' ? string[] : (string[] | undefined)
+        token: AuthVersion extends "v1" ? string : (string | undefined)
+        scopes: AuthVersion extends "v1" ? string[] : (string[] | undefined)
         id: string
     }
 
@@ -539,16 +552,16 @@ export interface Installation<AuthVersion extends ('v1' | 'v2') = ('v1' | 'v2'),
     }
 
     /** The App ID, which does not vary per installation. Left as undefined when not returned from fetch. */
-    appId?: AuthVersion extends 'v2' ? string : undefined
+    appId?: AuthVersion extends "v2" ? string : undefined
 
     /** When the installation contains a bot user, the token type. Left as undefined when not returned from fetch. */
-    tokenType?: 'bot'
+    tokenType?: "bot"
 
     /**
      * When the installation is an enterprise org install, the URL of the landing page for all workspaces in the org.
      * Left as undefined when not returned from fetch.
      */
-    enterpriseUrl?: AuthVersion extends 'v2' ? string : undefined
+    enterpriseUrl?: AuthVersion extends "v2" ? string : undefined
 
     /** Whether the installation was performed on an enterprise org. Synthesized as `false` when not present. */
     isEnterpriseInstall?: IsEnterpriseInstall
@@ -560,7 +573,7 @@ export interface Installation<AuthVersion extends ('v1' | 'v2') = ('v1' | 'v2'),
 /**
  * A type to describe enterprise organization installations.
  */
-export type OrgInstallation = Installation<'v2', true>
+export type OrgInstallation = Installation<"v2", true>
 
 interface EnterpriseInfo {
     id: string
@@ -606,11 +619,12 @@ function getSuccessBody(
         redirectUrl = `slack://app?team=${installation.team.id}&id=${installation.appId}`
     } else if (isOrgInstall(installation)) {
         // redirect to Slack app management dashboard
-        redirectUrl = `${installation.enterpriseUrl}manage/organization/apps/profile/${installation.appId}/workspaces/add`
+        redirectUrl =
+            `${installation.enterpriseUrl}manage/organization/apps/profile/${installation.appId}/workspaces/add`
     } else {
         // redirect back to Slack native app
         // does not change the workspace the slack client was last in
-        redirectUrl = 'slack://open'
+        redirectUrl = "slack://open"
     }
     const htmlResponse = `<html>
   <meta http-equiv="refresh" content="0 URL=${redirectUrl}">
@@ -627,7 +641,8 @@ function getFailureBody(
     _error: CodedError,
     _options: InstallURLOptions,
 ): string {
-    const htmlResponse = '<html><body><h1>Oops, Something Went Wrong! Please Try Again or Contact the App Owner</h1></body></html>'
+    const htmlResponse =
+        "<html><body><h1>Oops, Something Went Wrong! Please Try Again or Contact the App Owner</h1></body></html>"
     return htmlResponse
 }
 
@@ -643,7 +658,7 @@ function isOrgInstall(installation: Installation): installation is OrgInstallati
     return installation.isEnterpriseInstall || false
 }
 
-function isNotOrgInstall(installation: Installation): installation is Installation<'v1' | 'v2', false> {
+function isNotOrgInstall(installation: Installation): installation is Installation<"v1" | "v2", false> {
     return !(isOrgInstall(installation))
 }
 
@@ -651,23 +666,23 @@ function isNotOrgInstall(installation: Installation): installation is Installati
 interface OAuthV2Response extends WebAPICallResult {
     app_id: string
     authed_user: {
-        id: string,
-        scope?: string,
-        access_token?: string,
-        token_type?: string,
+        id: string
+        scope?: string
+        access_token?: string
+        token_type?: string
     }
     scope?: string
-    token_type?: 'bot'
+    token_type?: "bot"
     access_token?: string
     bot_user_id?: string
-    team: { id: string, name: string } | null
-    enterprise: { name: string, id: string } | null
+    team: { id: string; name: string } | null
+    enterprise: { name: string; id: string } | null
     is_enterprise_install: boolean
     incoming_webhook?: {
-        url: string,
-        channel: string,
-        channel_id: string,
-        configuration_url: string,
+        url: string
+        channel: string
+        channel_id: string
+        configuration_url: string
     }
 }
 
@@ -680,12 +695,12 @@ interface OAuthV1Response extends WebAPICallResult {
     team_id: string
     enterprise_id: string | null
     // if they request bot user token
-    bot?: { bot_user_id: string, bot_access_token: string }
+    bot?: { bot_user_id: string; bot_access_token: string }
     incoming_webhook?: {
-        url: string,
-        channel: string,
-        channel_id: string,
-        configuration_url: string,
+        url: string
+        channel: string
+        channel_id: string
+        configuration_url: string
     }
     // app_id is currently undefined but leaving it in here incase the v1 method adds it
     app_id: string | undefined
@@ -698,5 +713,5 @@ interface AuthTestResult extends WebAPICallResult {
     url?: string
 }
 
-export { LogLevel } from './logger.ts'
-export type { Logger } from './logger.ts'
+export { LogLevel } from "./logger.ts"
+export type { Logger } from "./logger.ts"

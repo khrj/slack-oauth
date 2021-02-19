@@ -1,7 +1,7 @@
-import { Logger, LogLevel, ConsoleLogger } from '../deps.ts'
-export { LogLevel, ConsoleLogger } from '../deps.ts'
+import { ConsoleLogger, Logger, LogLevel } from "../deps.ts"
+export { ConsoleLogger, LogLevel } from "../deps.ts"
 
-export type { Logger } from '../deps.ts'
+export type { Logger } from "../deps.ts"
 
 let instanceCount = 0
 
@@ -15,7 +15,7 @@ export function getLogger(name: string, level: LogLevel, existingLogger?: Logger
 
     // Set up the logger.
     const logger: Logger = (() => {
-        if (existingLogger !== undefined) { return existingLogger }
+        if (existingLogger !== undefined) return existingLogger
         return new ConsoleLogger()
     })()
     logger.setName(`${name}:${instanceId}`)
