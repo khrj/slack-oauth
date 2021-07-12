@@ -5,12 +5,12 @@
         <b>Setup the OAuth flow for Slack apps easily. Deno port of <a href="https://www.npmjs.com/package/@slack/oauth">@slack/oauth</a></b>
     </p>
     <p>
-        <img alt="build status" src="https://img.shields.io/github/workflow/status/KhushrajRathod/slack-oauth/Deno?label=checks" >
-        <img alt="language" src="https://img.shields.io/github/languages/top/KhushrajRathod/slack-oauth" >
-        <img alt="code size" src="https://img.shields.io/github/languages/code-size/KhushrajRathod/slack-oauth">
-        <img alt="issues" src="https://img.shields.io/github/issues/KhushrajRathod/slack-oauth" >
-        <img alt="license" src="https://img.shields.io/github/license/KhushrajRathod/slack-oauth">
-        <img alt="version" src="https://img.shields.io/github/v/release/KhushrajRathod/slack-oauth">
+        <img alt="build status" src="https://img.shields.io/github/workflow/status/khrj/slack-oauth/Deno?label=checks" >
+        <img alt="language" src="https://img.shields.io/github/languages/top/khrj/slack-oauth" >
+        <img alt="code size" src="https://img.shields.io/github/languages/code-size/khrj/slack-oauth">
+        <img alt="issues" src="https://img.shields.io/github/issues/khrj/slack-oauth" >
+        <img alt="license" src="https://img.shields.io/github/license/khrj/slack-oauth">
+        <img alt="version" src="https://img.shields.io/github/v/release/khrj/slack-oauth">
     </p>
     <p>
         <b><a href="https://deno.land/x/slack_oauth">View on deno.land</a></b>
@@ -110,11 +110,11 @@ console.log(result)
 
 ## Supporters
 
-[![Stargazers repo roster for @KhushrajRathod/slack-oauth](https://reporoster.com/stars/KhushrajRathod/slack-oauth)](https://github.com/KhushrajRathod/slack-oauth/stargazers)
+[![Stargazers repo roster for @khrj/slack-oauth](https://reporoster.com/stars/khrj/slack-oauth)](https://github.com/khrj/slack-oauth/stargazers)
 
-[![Forkers repo roster for @KhushrajRathod/slack-oauth](https://reporoster.com/forks/KhushrajRathod/slack-oauth)](https://github.com/KhushrajRathod/slack-oauth/network/members)
+[![Forkers repo roster for @khrj/slack-oauth](https://reporoster.com/forks/khrj/slack-oauth)](https://github.com/khrj/slack-oauth/network/members)
 
 ## Related
 
 - [Deno Slack SDK](https://github.com/slack-deno/deno-slack-sdk)
-- [Deno modules](https://github.com/KhushrajRathod/DenoModules)
+- [Deno modules](https://github.com/khrj/deno-modules)
